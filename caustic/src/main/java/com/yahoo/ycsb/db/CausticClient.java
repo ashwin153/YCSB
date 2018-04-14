@@ -17,6 +17,11 @@
  */
 package com.yahoo.ycsb.db;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +52,9 @@ public class CausticClient extends DB {
       "FIELD5", "FIELD6", "FIELD7", "FIELD8", "FIELD9"
   };
 
+  private final File data = new File("./caustic/data.txt");
   private Runtime runtime;
+  private Volume volume;
   private boolean initialized;
 
   /**
@@ -60,9 +67,39 @@ public class CausticClient extends DB {
       throw new DBException("Client is already initialized.");
     }
 
-    // Construct a runtime.
-    runtime = Runtime.apply(Volume.Memory$.MODULE$.empty());
-    this.initialized = true;
+    try {
+      // Load the volume.
+      if (this.data.exists()) {
+        FileInputStream bytes = new FileInputStream(data);
+        ObjectInputStream stream = new ObjectInputStream(bytes);
+        this.volume = (Volume) stream.readObject();
+        bytes.close();
+      } else {
+        this.volume = Volume.Memory$.MODULE$.empty();
+      }
+
+      // Construct a runtime.
+      this.runtime = Runtime.apply(volume);
+      this.initialized = true;
+    } catch (Exception e) {
+      throw new DBException(e);
+    }
+  }
+
+  /**
+   * Cleanup any state for this DB. Called once per DB instance; there is one DB instance per client
+   * thread.
+   */
+  @Override
+  public void cleanup() throws DBException {
+    try {
+      FileOutputStream bytes = new FileOutputStream(this.data);
+      ObjectOutputStream stream = new ObjectOutputStream(bytes);
+      stream.writeObject(this.volume);
+      bytes.close();
+    } catch (Exception e) {
+      throw new DBException(e);
+    }
   }
 
   /**
