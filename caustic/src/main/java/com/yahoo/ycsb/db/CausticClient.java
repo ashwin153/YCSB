@@ -17,33 +17,22 @@
  */
 package com.yahoo.ycsb.db;
 
-import java.beans.PropertyVetoException;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
-import java.util.concurrent.ForkJoinPool;
 
-import scala.concurrent.ExecutionContext;
-import scala.concurrent.ExecutionContext$;
-
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.DB;
 import com.yahoo.ycsb.DBException;
 import com.yahoo.ycsb.Status;
 import com.yahoo.ycsb.StringByteIterator;
 
-import caustic.runtime.jdbc.MySQLDatabase;
-import caustic.runtime.thrift.Transaction;
-
-import caustic.service.Client;
-import caustic.service.Connection;
-import caustic.service.JavaCodec;
-import static caustic.service.JavaCodec.*;
-import caustic.service.Server;
+import caustic.runtime.JBuilder;
+import caustic.runtime.Program;
+import caustic.runtime.Runtime;
+import caustic.runtime.Text;
+import caustic.runtime.Volume;
 
 /**
  * A Caustic, YCSB client.
@@ -58,9 +47,7 @@ public class CausticClient extends DB {
       "FIELD5", "FIELD6", "FIELD7", "FIELD8", "FIELD9"
   };
 
-  private ComboPooledDataSource pool;
-  private Server server;
-  private Client client;
+  private Runtime runtime;
   private boolean initialized;
 
   /**
@@ -73,44 +60,9 @@ public class CausticClient extends DB {
       throw new DBException("Client is already initialized.");
     }
 
-    // Extract the database host name and port.
-    Properties props = getProperties();
-   
-    try {
-      // Setup database connection pool.
-      this.pool = new ComboPooledDataSource();
-      this.pool.setDriverClass(props.getProperty("db.driver"));
-      this.pool.setJdbcUrl(props.getProperty("db.url"));
-      this.pool.setUser(props.getProperty("db.user"));
-      this.pool.setPassword(props.getProperty("db.passwd"));
-    } catch (PropertyVetoException e) {
-      throw new DBException("Unable to initialize connection pool.", e);
-    }
-
-    // Configure a server instance.
-    ExecutionContext executor = ExecutionContext$.MODULE$.fromExecutorService(ForkJoinPool.commonPool());
-    this.server = new Server(new MySQLDatabase(this.pool, executor), 9000);
-    this.server.serve();
-
-    // Bind a client connection.
-    this.client = new Connection("localhost", 9000);
+    // Construct a runtime.
+    runtime = Runtime.apply(Volume.Memory$.MODULE$.empty());
     this.initialized = true;
-  }
-
-  /**
-   * Cleanup any state for this DB. Called once per DB instance; there is one DB instance per client 
-   * thread.
-   */
-  @Override
-  public void cleanup() throws DBException {
-    try {
-      // Close the database client and server.
-      this.client.close();
-      this.server.close();
-      this.pool.close();
-    } catch (IOException e) {
-      throw new DBException("Unable to close client/server.", e);
-    }
   }
 
   /**
@@ -134,16 +86,16 @@ public class CausticClient extends DB {
     String[] keys = new String[length];
     String[] names = (fields == null) ? DEFAULT_FIELDS : fields.toArray(new String[fields.size()]);
    
-    // Construct the transaction.
-    Transaction txn = Empty();
+    // Construct a program that serializes all values to string.
+    Program program = JBuilder.Empty();
     for (int i = 0; i < names.length; i++) {
       keys[i] = table + "$" + key + "$" + names[i];
-      txn = add(add(txn, JavaCodec.read(text(keys[i]))), text("\0"));
+      program = JBuilder.add(JBuilder.add(program, JBuilder.read(JBuilder.text(keys[i]))), JBuilder.text("\0"));
     } 
 
     try {
       // Execute the transaction and parse the result.
-      String[] values = this.client.execute(txn).get().getText().split("\0");
+      String[] values = ((Text) (this.runtime.execute(program).get())).value().split("\0");
       for (int i = 0; i < values.length; i++) {
         if (values[i].length() > 0) {
           result.put(names[i], new StringByteIterator(values[i]));
@@ -215,16 +167,16 @@ public class CausticClient extends DB {
       Map<String, ByteIterator> values
   ) {
     // Construct the transaction.
-    Transaction txn = Empty();
+    Program program = JBuilder.Empty();
     for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
       String name = table + "$" + key + "$" + entry.getKey();
       String value = entry.getValue().toString();
-      txn = cons(txn, write(text(name), text(value)));
+      program = JBuilder.cons(program, JBuilder.write(JBuilder.text(name), JBuilder.text(value)));
     }
 
     try {
       // Execute the transaction.
-      this.client.execute(txn).get();
+      this.runtime.execute(program).get();
       return Status.OK;
     } catch (Exception e) {
       return Status.ERROR;

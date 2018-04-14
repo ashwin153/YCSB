@@ -108,7 +108,7 @@ LICENSE file.
     <azurestorage.version>4.0.0</azurestorage.version>
     <cloudspanner.version>0.21.1-beta</cloudspanner.version>
     <beaker.version>1.0.3</beaker.version>
-    <caustic.version>1.5.1</caustic.version>
+    <caustic.version>1.5.5</caustic.version>
   </properties>
 
   <modules>
