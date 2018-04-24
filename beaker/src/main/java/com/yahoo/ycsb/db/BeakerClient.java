@@ -17,17 +17,15 @@
  */
 package com.yahoo.ycsb.db;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
-import scala.Option;
 import scala.collection.JavaConverters;
-import scala.concurrent.duration.Duration;
 
 import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.DB;
@@ -36,7 +34,6 @@ import com.yahoo.ycsb.Status;
 import com.yahoo.ycsb.StringByteIterator;
 
 import beaker.client.Client;
-import beaker.server.Instance;
 import beaker.server.protobuf.Revision;
 
 /**
@@ -46,15 +43,17 @@ import beaker.server.protobuf.Revision;
  */
 public class BeakerClient extends DB {
 
+  // Address of the Beaker instance.
+  private static final String BEAKER_HOST = "beaker.host";
+  private static final String BEAKER_PORT = "beaker.port";
+
   // By default, each key has 10 possible fields.
   private static final Set<String> DEFAULT_FIELDS = new HashSet(Arrays.asList(
       "FIELD0", "FIELD1", "FIELD2", "FIELD3", "FIELD4",
       "FIELD5", "FIELD6", "FIELD7", "FIELD8", "FIELD9"
   ));
 
-  private Instance instance;
   private Client client;
-  private boolean initialized;
 
   /**
    * Initialize any state for this DB. Called once per DB instance; there is one DB instance per 
@@ -62,24 +61,11 @@ public class BeakerClient extends DB {
    */
   @Override
   public void init() throws DBException {
-    if (this.initialized) {
-      throw new DBException("Client is already initialized.");
-    }
-
-    // Construct a beaker instance.
-    instance = Instance.apply(new Instance.Config(
-        9090,
-        Option.<String>apply(null),
-        Duration.fromNanos(1E9),
-        Conversions.toList(new ArrayList<String>()),
-        "local")
+    Properties properties = getProperties();
+    this.client = Client.apply(
+        properties.getProperty(BEAKER_HOST, "localhost"),
+        Integer.parseInt(properties.getProperty(BEAKER_PORT, "9090"))
     );
-
-    instance.serve();
-
-    // Bind a client connection.
-    this.client = Client.apply("localhost", 9000);
-    this.initialized = true;
   }
 
   /**
@@ -89,7 +75,6 @@ public class BeakerClient extends DB {
   @Override
   public void cleanup() throws DBException {
     this.client.close();
-    this.instance.close();
   }
 
   /**

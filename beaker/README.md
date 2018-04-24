@@ -1,41 +1,18 @@
-# MySQL
-1. Install MySQL.
+# Beaker
+Because deletes in Beaker are tombstones, the underlying database must be manually
+truncated or the servers must be manually restarted between workloads.
 
-```
-brew install mysql
-brew services start mysql
-```
+```bash
+# Setup an in-memory Beaker.
+git clone https://github.com/ashwin153/beaker && cd beaker/
+./run.sh -p 9090 -o beaker.server.seed=127.0.0.1:9090 && cd ..
 
-2. Create the ```usertable``` in database ```ycsb```.
+# Setup YCSB.
+sudo apt install maven
+git clone https://github.com/ashwin153/YCSB && cd YCSB/
+mvn package -DskipTests
 
-```
-mysql -u root -e "CREATE DATABASE `ycsb`"
-mysql -u root -e "CREATE TABLE `ycsb`.`usertable` (
-  `YCSB_KEY` VARCHAR(255) PRIMARY KEY,
-  `FIELD0` TEXT, `FIELD1` TEXT,
-  `FIELD2` TEXT, `FIELD3` TEXT,
-  `FIELD4` TEXT, `FIELD5` TEXT,
-  `FIELD6` TEXT, `FIELD7` TEXT,
-  `FIELD8` TEXT, `FIELD9` TEXT
-);"
-```
-
-3. Benchmark the JDBC implementation.
-
-```
-bin/ycsb load jdbc -P workloads/workloada -P beaker/setup/mysql/db.properties -cp beaker/setup/mysql/mysql-connector-java-6.0.6.jar
-bin/ycsb run jdbc -P workloads/workloada -P beaker/setup/mysql/db.properties -cp beaker/setup/mysql/mysql-connector-java-6.0.6.jar
-```
-
-4. Benchmark the Beaker implementation.
-
-```
+# Benchmark Beaker.
 bin/ycsb load beaker -P workloads/workloada 
-bin/ycsb run beaker -P workloads/workloada 
-```
-
-5. Because deletes in Beaker are tombstones, be sure to truncate the database after each test.
-
-```
-mysql -u root -e "TRUNCATE test.caustic"
+bin/ycsb run  beaker -P workloads/workloada 
 ```
