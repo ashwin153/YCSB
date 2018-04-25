@@ -18,25 +18,18 @@
     <packaging>jar</packaging>
 
     <properties>
-        <!-- Skip tests by default. Will be activated by jdk8 profile. -->
         <skipJDK9Tests>true</skipJDK9Tests>
     </properties>
 
     <dependencies>
-        <!-- Beaker Dependencies. -->
+        <!-- Beaker -->
         <dependency>
             <groupId>com.madavan</groupId>
             <artifactId>beaker-client_2.12</artifactId>
             <version>${beaker.version}</version>
         </dependency>
 
-        <dependency>
-          <groupId>com.madavan</groupId>
-          <artifactId>beaker-server_2.12</artifactId>
-          <version>${beaker.version}</version>
-        </dependency>
-
-        <!-- YCSB Dependencies. -->
+        <!-- YCSB -->
         <dependency>
             <groupId>com.yahoo.ycsb</groupId>
             <artifactId>core</artifactId>

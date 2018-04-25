@@ -18,19 +18,18 @@
     <packaging>jar</packaging>
 
     <properties>
-        <!-- Skip tests by default. Will be activated by jdk8 profile. -->
         <skipTests>true</skipTests>
     </properties>
 
     <dependencies>
-        <!-- Caustic Dependencies. -->
+        <!-- Caustic -->
         <dependency>
             <groupId>com.madavan</groupId>
             <artifactId>caustic-runtime_2.12</artifactId>
             <version>${caustic.version}</version>
         </dependency>
 
-        <!-- YCSB Dependencies. -->
+        <!-- YCSB -->
         <dependency>
             <groupId>com.yahoo.ycsb</groupId>
             <artifactId>core</artifactId>
