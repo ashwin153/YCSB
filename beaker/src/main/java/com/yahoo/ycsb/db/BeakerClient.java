@@ -25,8 +25,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
-import scala.collection.JavaConverters;
-
 import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.DB;
 import com.yahoo.ycsb.DBException;
@@ -101,11 +99,7 @@ public class BeakerClient extends DB {
         names.add(table + "$" + key + "$" + field);
       }
 
-      Map<String, Revision> values = JavaConverters.mapAsJavaMap(
-          this.client.get(Conversions.toSet(names)).get()
-      );
-
-      for (Map.Entry<String, Revision> entry : values.entrySet()) {
+      for (Map.Entry<String, Revision> entry : this.client.get(names).get().entrySet()) {
         result.put(entry.getKey(), new StringByteIterator(entry.getValue().value()));
       }
 
@@ -181,7 +175,7 @@ public class BeakerClient extends DB {
 
     try {
       // Execute the transaction.
-      this.client.put(Conversions.toMap(updates));
+      this.client.put(updates).get();
       return Status.OK;
     } catch (Exception e) {
       return Status.ERROR;
