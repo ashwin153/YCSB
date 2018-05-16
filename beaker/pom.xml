@@ -29,6 +29,12 @@
             <version>${beaker.version}</version>
         </dependency>
 
+        <dependency>
+          <groupId>com.madavan</groupId>
+          <artifactId>beaker-protobuf</artifactId>
+          <version>${beaker.version}</version>
+        </dependency>
+
         <!-- YCSB -->
         <dependency>
             <groupId>com.yahoo.ycsb</groupId>
