@@ -107,7 +107,7 @@ LICENSE file.
     <arangodb3.version>4.1.7</arangodb3.version>
     <azurestorage.version>4.0.0</azurestorage.version>
     <cloudspanner.version>0.21.1-beta</cloudspanner.version>
-    <beaker.version>2.0.2</beaker.version>
+    <beaker.version>2.0.3</beaker.version>
     <caustic.version>2.0.3</caustic.version>
   </properties>
 
