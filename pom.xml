@@ -55,7 +55,7 @@ LICENSE file.
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-core</artifactId>
-        <version>1.10.0</version>
+        <version>1.12.0</version>
       </dependency>
       <!--
       Nail down slf4j version to 1.6 so that it defaults to no-op logger.
